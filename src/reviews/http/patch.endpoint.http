@@ -1,0 +1,7 @@
+PATCH http://localhost:3000/reviews/1
+Content-Type: application/json
+
+{
+  "rating": 4,
+  "comment": "Good session, could improve."
+}

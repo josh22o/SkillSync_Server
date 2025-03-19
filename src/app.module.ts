@@ -1,34 +1,24 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import databaseConfig from './config/database.config';
+import { UsersModule } from './users/users.module';
+import { MentorsModule } from './mentors/mentor.module';
+import { MenteesModule } from './mentees/mentees.module';
+import { SessionsModule } from './sessions/sessions.module';
+import { PaymentsModule } from './payments/payments.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true, 
-    }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DATABASE_HOST,
-      port: +process.env.DATABASE_PORT,
-      username: process.env.DATABASE_USER,
-      password: process.env.DATABASE_PASSWORD,
-      database: process.env.DATABASE_NAME,
-      autoLoadEntities: true,
-      synchronize: true, 
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRoot(databaseConfig()), // Ensure it returns TypeOrmModuleOptions
+    UsersModule,
+    MentorsModule,
+    MenteesModule,
+    SessionsModule,
+    PaymentsModule,
+    ReviewsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
-
-
-
-
-
-
-
-
