@@ -1,9 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ReviewService } from './providers/review.service';
 import { CreateReviewDto } from './dto/createReviewdto';
 import { UpdateReviewDto } from './dto/updateReview.dto';
+import { CacheInterceptor } from 'src/common/interceptor/cache.interceptor';
 
 @Controller('reviews')
+@UseInterceptors(CacheInterceptor)
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 

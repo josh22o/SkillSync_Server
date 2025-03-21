@@ -8,6 +8,7 @@ import { MenteesModule } from './mentees/mentees.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { RedisModule } from './common/redis/redis.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     SessionsModule,
     PaymentsModule,
     ReviewsModule,
+    RedisModule,
   ],
 })
 export class AppModule {}
