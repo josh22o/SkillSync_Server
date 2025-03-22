@@ -1,9 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseInterceptors,
+} from '@nestjs/common';
 import { SessionService } from './providers/session.service';
 import { CreateSessionDto } from './dto/createSession.dto';
 import { UpdateSessionDto } from './dto/updateSession.dto';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('sessions')
+@UseInterceptors(CacheInterceptor)
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 

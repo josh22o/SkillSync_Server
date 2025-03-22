@@ -8,7 +8,9 @@ import { MenteesModule } from './mentees/mentees.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { RedisModule } from './common/redis/redis.module';
 import { AuthModule } from './auth/auth.module';
+
 
 @Module({
   imports: [
@@ -20,7 +22,9 @@ import { AuthModule } from './auth/auth.module';
     SessionsModule,
     PaymentsModule,
     ReviewsModule,
+    RedisModule,
     AuthModule,
+
   ],
 })
 export class AppModule {}
