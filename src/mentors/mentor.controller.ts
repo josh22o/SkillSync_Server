@@ -1,9 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseInterceptors,
+} from '@nestjs/common';
 import { MentorService } from './providers/mentor.service';
 import { CreateMentorDto } from './dto/createMentor.dto';
 import { UpdateMentorDto } from './dto/update-Mentor.dto';
+import { CacheInterceptor } from 'src/common/interceptor/cache.interceptor';
 
 @Controller('mentors')
+@UseInterceptors(CacheInterceptor)
 export class MentorController {
   constructor(private readonly mentorService: MentorService) {}
 
