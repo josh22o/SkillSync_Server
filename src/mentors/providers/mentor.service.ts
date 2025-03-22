@@ -1,37 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Mentor } from '../mentor.entity';
 import { CreateMentorDto } from '../dto/createMentor.dto';
 import { UpdateMentorDto } from '../dto/update-Mentor.dto';
-import { Mentor } from '../mentor.entity';
 
 @Injectable()
 export class MentorService {
-  private mentors: Mentor[] = [];
-  private idCounter = 1;
+  constructor(
+    @InjectRepository(Mentor)
+    private mentorRepository: Repository<Mentor>,
+  ) {}
 
-  create(createMentorDto: CreateMentorDto): Mentor {
-    const newMentor: Mentor = { id: this.idCounter++, ...createMentorDto };
-    this.mentors.push(newMentor);
-    return newMentor;
+  async create(createMentorDto: CreateMentorDto): Promise<Mentor> {
+    const mentor = this.mentorRepository.create(createMentorDto);
+    return await this.mentorRepository.save(mentor);
   }
 
-  findAll(): Mentor[] {
-    return this.mentors;
+  async findAll(): Promise<Mentor[]> {
+    return await this.mentorRepository.find();
   }
 
-  findOne(id: number): Mentor {
-    return this.mentors.find(mentor => mentor.id === id);
+  async findOne(id: number): Promise<Mentor> {
+    const mentor = await this.mentorRepository.findOne({ where: { id } });
+    if (!mentor) {
+      throw new NotFoundException(`Mentor with id ${id} not found`);
+    }
+    return mentor;
   }
 
-  update(id: number, updateMentorDto: UpdateMentorDto): Mentor {
-    const index = this.mentors.findIndex(mentor => mentor.id === id);
-    if (index < 0) return null;
-    this.mentors[index] = { ...this.mentors[index], ...updateMentorDto };
-    return this.mentors[index];
+  async update(id: number, updateMentorDto: UpdateMentorDto): Promise<Mentor> {
+    const mentor = await this.mentorRepository.preload({
+      id,
+      ...updateMentorDto,
+    });
+    if (!mentor) {
+      throw new NotFoundException(`Mentor with id ${id} not found`);
+    }
+    return await this.mentorRepository.save(mentor);
   }
 
-  remove(id: number): boolean {
-    const initialLength = this.mentors.length;
-    this.mentors = this.mentors.filter(mentor => mentor.id !== id);
-    return this.mentors.length < initialLength;
+  async remove(id: number): Promise<void> {
+    const result = await this.mentorRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Mentor with id ${id} not found`);
+    }
   }
 }

@@ -1,37 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Mentee } from '../mentee.entity';
 import { CreateMenteeDto } from '../dto/createMentee.dto';
 import { UpdateMenteeDto } from '../dto/updateMentee.dto';
-import { Mentee } from '../mentee.entity';
 
 @Injectable()
 export class MenteeService {
-  private mentees: Mentee[] = [];
-  private idCounter = 1;
+  constructor(
+    @InjectRepository(Mentee)
+    private menteeRepository: Repository<Mentee>,
+  ) {}
 
-  create(createMenteeDto: CreateMenteeDto): Mentee {
-    const newMentee: Mentee = { id: this.idCounter++, ...createMenteeDto };
-    this.mentees.push(newMentee);
-    return newMentee;
+  async create(createMenteeDto: CreateMenteeDto): Promise<Mentee> {
+    const mentee = this.menteeRepository.create(createMenteeDto);
+    return await this.menteeRepository.save(mentee);
   }
 
-  findAll(): Mentee[] {
-    return this.mentees;
+  async findAll(): Promise<Mentee[]> {
+    return await this.menteeRepository.find();
   }
 
-  findOne(id: number): Mentee {
-    return this.mentees.find(mentee => mentee.id === id);
+  async findOne(id: number): Promise<Mentee> {
+    const mentee = await this.menteeRepository.findOne({ where: { id } });
+    if (!mentee) {
+      throw new NotFoundException(`Mentee with id ${id} not found`);
+    }
+    return mentee;
   }
 
-  update(id: number, updateMenteeDto: UpdateMenteeDto): Mentee {
-    const index = this.mentees.findIndex(mentee => mentee.id === id);
-    if (index < 0) return null;
-    this.mentees[index] = { ...this.mentees[index], ...updateMenteeDto };
-    return this.mentees[index];
+  async update(id: number, updateMenteeDto: UpdateMenteeDto): Promise<Mentee> {
+    const mentee = await this.menteeRepository.preload({
+      id,
+      ...updateMenteeDto,
+    });
+    if (!mentee) {
+      throw new NotFoundException(`Mentee with id ${id} not found`);
+    }
+    return await this.menteeRepository.save(mentee);
   }
 
-  remove(id: number): boolean {
-    const initialLength = this.mentees.length;
-    this.mentees = this.mentees.filter(mentee => mentee.id !== id);
-    return this.mentees.length < initialLength;
+  async remove(id: number): Promise<void> {
+    const result = await this.menteeRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Mentee with id ${id} not found`);
+    }
   }
 }

@@ -1,37 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Session } from '../session.entity';
 import { CreateSessionDto } from '../dto/createSession.dto';
 import { UpdateSessionDto } from '../dto/updateSession.dto';
-import { Session } from '../session.entity';
 
 @Injectable()
 export class SessionService {
-  private sessions: Session[] = [];
-  private idCounter = 1;
+  constructor(
+    @InjectRepository(Session)
+    private sessionRepository: Repository<Session>,
+  ) {}
 
-  create(createSessionDto: CreateSessionDto): Session {
-    const newSession: Session = { id: this.idCounter++, ...createSessionDto };
-    this.sessions.push(newSession);
-    return newSession;
+  async create(createSessionDto: CreateSessionDto): Promise<Session> {
+    const session = this.sessionRepository.create(createSessionDto);
+    return await this.sessionRepository.save(session);
   }
 
-  findAll(): Session[] {
-    return this.sessions;
+  async findAll(): Promise<Session[]> {
+    return await this.sessionRepository.find();
   }
 
-  findOne(id: number): Session {
-    return this.sessions.find(session => session.id === id);
+  async findOne(id: number): Promise<Session> {
+    const session = await this.sessionRepository.findOne({ where: { id } });
+    if (!session) {
+      throw new NotFoundException(`Session with id ${id} not found`);
+    }
+    return session;
   }
 
-  update(id: number, updateSessionDto: UpdateSessionDto): Session {
-    const index = this.sessions.findIndex(session => session.id === id);
-    if (index < 0) return null;
-    this.sessions[index] = { ...this.sessions[index], ...updateSessionDto };
-    return this.sessions[index];
+  async update(id: number, updateSessionDto: UpdateSessionDto): Promise<Session> {
+    const session = await this.sessionRepository.preload({
+      id,
+      ...updateSessionDto,
+    });
+    if (!session) {
+      throw new NotFoundException(`Session with id ${id} not found`);
+    }
+    return await this.sessionRepository.save(session);
   }
 
-  remove(id: number): boolean {
-    const initialLength = this.sessions.length;
-    this.sessions = this.sessions.filter(session => session.id !== id);
-    return this.sessions.length < initialLength;
+  async remove(id: number): Promise<void> {
+    const result = await this.sessionRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Session with id ${id} not found`);
+    }
   }
 }

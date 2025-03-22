@@ -1,43 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from '../user.entity';
 import { CreateUserDto } from '../dto/createUser.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { User } from '../user.entity';
 
 @Injectable()
 export class UserService {
-  // In-memory storage for demonstration
-  private users: User[] = [];
-  private idCounter = 1;
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {}
 
-  // Create a new user
-  create(createUserDto: CreateUserDto): User {
-    const newUser: User = { id: this.idCounter++, ...createUserDto };
-    this.users.push(newUser);
-    return newUser;
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const user = this.userRepository.create(createUserDto);
+    return await this.userRepository.save(user);
   }
 
-  // Retrieve all users
-  findAll(): User[] {
-    return this.users;
+  async findAll(): Promise<User[]> {
+    return await this.userRepository.find();
   }
 
-  // Find a user by ID
-  findOne(id: number): User {
-    return this.users.find(user => user.id === id);
+  async findOne(id: number): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+    return user;
   }
 
-  // Update a user by ID
-  update(id: number, updateUserDto: UpdateUserDto): User {
-    const index = this.users.findIndex(user => user.id === id);
-    if (index < 0) return null;
-    this.users[index] = { ...this.users[index], ...updateUserDto };
-    return this.users[index];
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    const user = await this.userRepository.preload({
+      id,
+      ...updateUserDto,
+    });
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+    return await this.userRepository.save(user);
   }
 
-  // Delete a user by ID
-  remove(id: number): boolean {
-    const initialLength = this.users.length;
-    this.users = this.users.filter(user => user.id !== id);
-    return this.users.length < initialLength;
+  async remove(id: number): Promise<void> {
+    const result = await this.userRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
   }
 }
