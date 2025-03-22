@@ -1,6 +1,7 @@
 // src/users/user.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { RefreshToken } from '../auth/entities/refresh-token.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class User {
@@ -8,11 +9,15 @@ export class User {
   id: string;
 
   @Column({ unique: true })
-  username: string;
+  email: string;
 
   @Column()
+  name: string;
+
+  @Column()
+  @Exclude()
   password: string;
 
-  @OneToMany(() => RefreshToken, refreshToken => refreshToken.user)
+  @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
   refreshTokens: RefreshToken[];
 }
