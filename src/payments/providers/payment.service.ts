@@ -1,37 +1,48 @@
-import { Injectable } from '@nestjs/common';
+// payment.service.ts
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Payment } from '../payment.entity';
 import { CreatePaymentDto } from '../dto/createPayment.dto';
 import { UpdatePaymentDto } from '../dto/updatePayment.dto';
-import { Payment } from '../payment.entity';
 
 @Injectable()
 export class PaymentService {
-  private payments: Payment[] = [];
-  private idCounter = 1;
+  constructor(
+    @InjectRepository(Payment)
+    private readonly paymentRepository: Repository<Payment>,
+  ) {}
 
-  create(createPaymentDto: CreatePaymentDto): Payment {
-    const newPayment: Payment = { id: this.idCounter++, ...createPaymentDto };
-    this.payments.push(newPayment);
-    return newPayment;
+  async create(createPaymentDto: CreatePaymentDto): Promise<Payment> {
+    const payment = this.paymentRepository.create(createPaymentDto);
+    return await this.paymentRepository.save(payment);
   }
 
-  findAll(): Payment[] {
-    return this.payments;
+  async findAll(): Promise<Payment[]> {
+    return await this.paymentRepository.find();
   }
 
-  findOne(id: number): Payment {
-    return this.payments.find(payment => payment.id === id);
+  async findOne(id: number): Promise<Payment> {
+    const payment = await this.paymentRepository.findOne({ where: { id } });
+    if (!payment) {
+      throw new NotFoundException(`Payment with id ${id} not found`);
+    }
+    return payment;
   }
 
-  update(id: number, updatePaymentDto: UpdatePaymentDto): Payment {
-    const index = this.payments.findIndex(payment => payment.id === id);
-    if (index < 0) return null;
-    this.payments[index] = { ...this.payments[index], ...updatePaymentDto };
-    return this.payments[index];
+  async update(id: number, updatePaymentDto: UpdatePaymentDto): Promise<Payment> {
+    await this.paymentRepository.update(id, updatePaymentDto);
+    const updatedPayment = await this.paymentRepository.findOne({ where: { id } });
+    if (!updatedPayment) {
+      throw new NotFoundException(`Payment with id ${id} not found`);
+    }
+    return updatedPayment;
   }
 
-  remove(id: number): boolean {
-    const initialLength = this.payments.length;
-    this.payments = this.payments.filter(payment => payment.id !== id);
-    return this.payments.length < initialLength;
+  async remove(id: number): Promise<void> {
+    const result = await this.paymentRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Payment with id ${id} not found`);
+    }
   }
 }
